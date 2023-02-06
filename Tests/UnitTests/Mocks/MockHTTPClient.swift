@@ -62,7 +62,9 @@ class MockHTTPClient: HTTPClient {
     private let sourceTestFile: StaticString
 
     override func perform<Value: HTTPResponseBody>(_ request: HTTPRequest, completionHandler: Completion<Value>?) {
-        let call = Call(request: request.withHardcodedNonce,
+        let request = request.withHardcodedNonce
+
+        let call = Call(request: request,
                         headers: request.headers(with: self.authHeaders))
 
         DispatchQueue.main.async {
