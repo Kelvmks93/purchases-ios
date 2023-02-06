@@ -1,0 +1,10 @@
+{
+  "headers" : {
+    "X-Nonce" : "Cx8YKsmqReGe0wYPnsPzBA=="
+  },
+  "request" : {
+    "body" : null,
+    "method" : "GET",
+    "url" : "https://api.revenuecat.com/v1/health"
+  }
+}

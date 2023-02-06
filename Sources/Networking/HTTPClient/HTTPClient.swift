@@ -332,7 +332,7 @@ private extension HTTPClient {
 
 // MARK: - Extensions
 
-private extension HTTPRequest {
+extension HTTPRequest {
 
     func headers(with authHeaders: HTTPClient.RequestHeaders) -> HTTPClient.RequestHeaders {
         var result: HTTPClient.RequestHeaders = [:]

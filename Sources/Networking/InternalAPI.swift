@@ -25,9 +25,10 @@ final class InternalAPI {
         self.callbackCache = .init()
     }
 
-    func healthRequest(completion: @escaping ResponseHandler) {
+    func healthRequest(signed: Bool, completion: @escaping ResponseHandler) {
         let factory = HealthOperation.createFactory(httpClient: self.backendConfig.httpClient,
-                                                    callbackCache: self.callbackCache)
+                                                    callbackCache: self.callbackCache,
+                                                    signed: signed)
 
         let callback = HealthOperation.Callback(cacheKey: factory.cacheKey, completion: completion)
         let cacheStatus = self.callbackCache.add(callback)
@@ -57,27 +58,33 @@ private final class HealthOperation: CacheableNetworkOperation {
     }
 
     private let callbackCache: CallbackCache<Callback>
+    private let signed: Bool
 
     static func createFactory(
         httpClient: HTTPClient,
-        callbackCache: CallbackCache<Callback>
+        callbackCache: CallbackCache<Callback>,
+        signed: Bool
     ) -> CacheableNetworkOperationFactory<HealthOperation> {
-        return .init({ .init(httpClient: httpClient, callbackCache: callbackCache, cacheKey: $0) },
+        return .init({ .init(httpClient: httpClient, callbackCache: callbackCache, cacheKey: $0, signed: signed) },
                      individualizedCacheKeyPart: "")
     }
 
     private init(httpClient: HTTPClient,
                  callbackCache: CallbackCache<Callback>,
-                 cacheKey: String) {
+                 cacheKey: String,
+                 signed: Bool) {
         self.callbackCache = callbackCache
+        self.signed = signed
 
         super.init(configuration: Configuration(httpClient: httpClient), cacheKey: cacheKey)
     }
 
     override func begin(completion: @escaping () -> Void) {
-        self.httpClient.perform(
-            .init(method: .get, path: .health)
-        ) { (response: HTTPResponse<HTTPEmptyResponseBody>.Result) in
+        let request: HTTPRequest = self.signed
+            ? .createSignedRequest(method: .get, path: .health)
+            : .init(method: .get, path: .health)
+
+        self.httpClient.perform(request) { (response: HTTPResponse<HTTPEmptyResponseBody>.Result) in
             self.callbackCache.performOnAllItemsAndRemoveFromCache(withCacheable: self) { callback in
                 callback.completion(
                     response
