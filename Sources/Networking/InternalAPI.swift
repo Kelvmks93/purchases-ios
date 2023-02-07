@@ -80,11 +80,7 @@ private final class HealthOperation: CacheableNetworkOperation {
     }
 
     override func begin(completion: @escaping () -> Void) {
-        let request: HTTPRequest = self.signed
-            ? .createSignedRequest(method: .get, path: .health)
-            : .init(method: .get, path: .health)
-
-        self.httpClient.perform(request) { (response: HTTPResponse<HTTPEmptyResponseBody>.Result) in
+        self.httpClient.perform(self.createRequest()) { (response: HTTPResponse<HTTPEmptyResponseBody>.Result) in
             self.callbackCache.performOnAllItemsAndRemoveFromCache(withCacheable: self) { callback in
                 callback.completion(
                     response
@@ -95,6 +91,16 @@ private final class HealthOperation: CacheableNetworkOperation {
 
             completion()
         }
+    }
+
+    private func createRequest() -> HTTPRequest {
+        var request: HTTPRequest = .init(method: .get, path: .health)
+
+        if self.signed, #available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *) {
+            request.sign()
+        }
+
+        return request
     }
 
 }
