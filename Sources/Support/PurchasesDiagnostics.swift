@@ -81,7 +81,7 @@ extension PurchasesDiagnostics {
             try await self.unauthenticatedRequest()
             try await self.authenticatedRequest()
             try await self.offeringsRequest()
-            try await self.signedRequest()
+            try await self.signatureVerification()
         } catch let error as Error {
             throw error
         } catch let error {
@@ -100,7 +100,7 @@ private extension PurchasesDiagnostics {
     /// Makes a request to the backend, to verify connectivity, firewalls, or anything blocking network traffic.
     func unauthenticatedRequest() async throws {
         do {
-            try await self.purchases.healthRequest(signed: false)
+            try await self.purchases.healthRequest(signatureVerification: false)
         } catch {
             throw Error.failedConnectingToAPI(error)
         }
@@ -124,10 +124,9 @@ private extension PurchasesDiagnostics {
         }
     }
 
-    func signedRequest() async throws {
+    func signatureVerification() async throws {
         do {
-            // TODO: verify signature in response too
-            try await self.purchases.healthRequest(signed: true)
+            try await self.purchases.healthRequest(signatureVerification: true)
         } catch {
             throw Error.failedMakingSignedRequest(error)
         }

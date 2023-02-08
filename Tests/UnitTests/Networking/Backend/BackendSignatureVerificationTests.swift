@@ -7,7 +7,7 @@
 //
 //      https://opensource.org/licenses/MIT
 //
-//  BackendPostAttributionDataTests.swift
+//  BackendSignatureVerificationTests.swift
 //
 //  Created by Nacho Soto on 3/7/22.
 
@@ -17,7 +17,7 @@ import XCTest
 
 @testable import RevenueCat
 
-class BackendSignedTests: BaseBackendTests {
+class BackendSignatureVerificationTests: BaseBackendTests {
 
     override func createClient() -> MockHTTPClient {
         super.createClient(#file)
@@ -30,7 +30,7 @@ class BackendSignedTests: BaseBackendTests {
         )
 
         let error = waitUntilValue { completed in
-            self.internalAPI.healthRequest(signed: true, completion: completed)
+            self.internalAPI.healthRequest(signatureVerification: true, completion: completed)
         }
 
         expect(error).to(beNil())

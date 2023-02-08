@@ -66,7 +66,7 @@ class BaseBackendIntegrationTests: XCTestCase {
         }
 
         self.clearReceiptIfExists()
-        self.configurePurchases()
+        try self.configurePurchases()
         self.verifyPurchasesDoesNotLeak()
     }
 
@@ -87,7 +87,7 @@ private extension BaseBackendIntegrationTests {
         }
     }
 
-    func configurePurchases() {
+    func configurePurchases() throws {
         self.purchasesDelegate = TestPurchaseDelegate()
 
         Purchases.logLevel = .verbose
@@ -97,7 +97,7 @@ private extension BaseBackendIntegrationTests {
                             observerMode: Self.observerMode,
                             userDefaults: self.userDefaults,
                             platformInfo: nil,
-                            responseVerificationLevel: .default,
+                            responseVerificationLevel: try .enforced(Signing.loadPublicKey()),
                             storeKit2Setting: Self.storeKit2Setting,
                             storeKitTimeout: Configuration.storeKitRequestTimeoutDefault,
                             networkTimeout: Configuration.networkTimeoutDefault,

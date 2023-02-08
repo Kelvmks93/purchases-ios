@@ -41,12 +41,12 @@ extension HTTPRequest {
 
     /// Creates an `HTTPRequest` with a `nonce`.
     @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
-    static func createIntegrityEnforcedRequestRequest(method: Method, path: Path) -> Self {
+    static func createIntegrityEnforcedRequest(method: Method, path: Path) -> Self {
         return .init(method: method, path: path, nonce: Data.randomNonce())
     }
 
     /// Add a nonce to the request
-    mutating func sign() {
+    mutating func addRandomNonce() {
         self.nonce = Data.randomNonce()
     }
 
