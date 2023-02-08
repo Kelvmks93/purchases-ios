@@ -115,6 +115,66 @@ protocol SigningPublicKey {
 @available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *)
 extension CryptoKit.Curve25519.Signing.PublicKey: SigningPublicKey {}
 
+// MARK: - HTTPResponse validation
+
+extension HTTPResponse where Body == Data {
+
+    static func createAndValidate(with response: HTTPURLResponse,
+                                  body: Data,
+                                  request: HTTPRequest,
+                                  publicKey: Signing.PublicKey?) -> Self {
+        return Self.createAndValidate(body: body,
+                                      statusCode: .init(rawValue: response.statusCode),
+                                      headers: response.allHeaderFields,
+                                      request: request,
+                                      publicKey: publicKey)
+    }
+
+    static func createAndValidate(body: Data,
+                                  statusCode: HTTPStatusCode,
+                                  headers: HTTPClient.ResponseHeaders,
+                                  request: HTTPRequest,
+                                  publicKey: Signing.PublicKey?) -> Self {
+        return .init(
+            statusCode: statusCode,
+            responseHeaders: headers,
+            body: body,
+            validationResult: Self.validationResult(body: body,
+                                                    headers: headers,
+                                                    request: request,
+                                                    publicKey: publicKey)
+        )
+    }
+
+    private static func validationResult(
+        body: Data,
+        headers: HTTPClient.ResponseHeaders,
+        request: HTTPRequest,
+        publicKey: Signing.PublicKey?
+    ) -> HTTPResponseValidationResult {
+        guard let nonce = request.nonce,
+              let publicKey = publicKey,
+              #available(iOS 13.0, macOS 10.15, tvOS 13.0, watchOS 6.2, *) else {
+            return .notRequested
+        }
+
+        guard let signature = headers[HTTPClient.responseSignatureHeaderName] as? String else {
+            // TODO: log warning and test
+            return .failedValidation
+        }
+
+        if Signing.verify(message: body,
+                          nonce: nonce,
+                          hasValidSignature: signature,
+                          with: publicKey) {
+            return .validated
+        } else {
+            return .failedValidation
+        }
+    }
+
+}
+
 // MARK: - Internal implementation (visible for tests)
 
 extension Signing {

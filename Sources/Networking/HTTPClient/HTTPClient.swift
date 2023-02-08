@@ -18,6 +18,7 @@ import Foundation
 class HTTPClient {
 
     typealias RequestHeaders = [String: String]
+    typealias ResponseHeaders = [AnyHashable: Any]
     typealias Completion<Value: HTTPResponseBody> = (HTTPResponse<Value>.Result) -> Void
 
     let systemInfo: SystemInfo
@@ -72,6 +73,7 @@ extension HTTPClient {
 
     static let authorizationHeaderName = "Authorization"
     static let nonceHeaderName = "X-Nonce"
+    static let responseSignatureHeaderName = "x-signature"
 
 }
 
@@ -221,7 +223,10 @@ private extension HTTPClient {
 
         return Result
             .success(dataIfAvailable(statusCode))
-            .mapSuccessToOptionalHTTPResult(statusCode)
+            .mapSuccessToOptionalHTTPResponse(responseHeaders: httpURLResponse.allHeaderFields,
+                                              statusCode: statusCode,
+                                              request: request.httpRequest,
+                                              publicKey: self.systemInfo.responseVerificationLevel.publicKey)
             .map {
                 self.eTagManager.httpResultFromCacheOrBackend(with: httpURLResponse,
                                                               data: $0.body,
@@ -427,8 +432,30 @@ extension Result where Success == HTTPResponse<Data>, Failure == NetworkError {
 private extension Result where Success == Data? {
 
     /// Converts a `Result<Data?, Error>` into `Result<HTTPResponse<Data?>, Failure>`
-    func mapSuccessToOptionalHTTPResult(_ statusCode: HTTPStatusCode) -> Result<HTTPResponse<Data?>, Failure> {
-        return self.map { HTTPResponse(statusCode: statusCode, body: $0) }
+    func mapSuccessToOptionalHTTPResponse(
+        responseHeaders: HTTPClient.ResponseHeaders,
+        statusCode: HTTPStatusCode,
+        request: HTTPRequest,
+        publicKey: Signing.PublicKey?
+    ) -> Result<HTTPResponse<Data?>, Failure> {
+        return self.map { body in
+            if let body = body {
+                return HTTPResponse
+                    .createAndValidate(body: body,
+                                       statusCode: statusCode,
+                                       headers: responseHeaders,
+                                       request: request,
+                                       publicKey: publicKey)
+                    .mapBody(Optional.some)
+            } else {
+                return .init(
+                    statusCode: statusCode,
+                    responseHeaders: responseHeaders,
+                    body: body,
+                    validationResult: .notRequested // TODO: ?
+                )
+            }
+        }
     }
 
 }

@@ -46,7 +46,11 @@ class ETagManager {
                                       request: URLRequest,
                                       retried: Bool) -> HTTPResponse<Data>? {
         let statusCode: HTTPStatusCode = .init(rawValue: response.statusCode)
-        let resultFromBackend = HTTPResponse(statusCode: statusCode, body: data)
+        // TODO: use validation constructor instead
+        let resultFromBackend = HTTPResponse(statusCode: statusCode,
+                                             responseHeaders: response.allHeaderFields,
+                                             body: data)
+        // TODO: validation result?
             .asOptionalResponse
 
         let headersInResponse = response.allHeaderFields
@@ -166,7 +170,10 @@ extension ETagManager.Response {
     fileprivate var asResponse: HTTPResponse<Data> {
         return HTTPResponse(
             statusCode: self.statusCode,
-            body: self.data
+            responseHeaders: [:], // TODO:
+            body: self.data,
+            // TODO: store validation?
+            validationResult: .notRequested // TODO: ?
         )
     }
 }

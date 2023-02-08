@@ -59,7 +59,9 @@ class MockETagManager: ETagManager {
             invokedHTTPResultFromCacheOrBackendParameters = params
             invokedHTTPResultFromCacheOrBackendParametersList.append(params)
             if shouldReturnResultFromBackend {
-                return HTTPResponse(statusCode: .init(rawValue: response.statusCode), body: data)
+                return HTTPResponse(statusCode: .init(rawValue: response.statusCode),
+                                    responseHeaders: response.allHeaderFields,
+                                    body: data)
                     .asOptionalResponse
             }
             return stubbedHTTPResultFromCacheOrBackendResult

@@ -903,6 +903,8 @@ class HTTPClientTests: TestCase {
         expect(requests.value) == 2
     }
 
+    // TODO: add tests here too
+
     func testGetsResponseFromETagManagerWhenStatusCodeIsNotModified() throws {
         let path: HTTPRequest.Path = .mockPath
 
@@ -913,6 +915,7 @@ class HTTPClientTests: TestCase {
         self.eTagManager.shouldReturnResultFromBackend = false
         self.eTagManager.stubbedHTTPResultFromCacheOrBackendResult = .init(
             statusCode: .success,
+            responseHeaders: [:],
             body: mockedCachedResponse
         )
 
